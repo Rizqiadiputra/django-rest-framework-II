@@ -1,3 +1,41 @@
+"""
+tutorial 4, authentication and autorization
+Using generic class-based views
+
+"""
+
+from .models import Student
+from .serializers import StudentSerializer, UserSerializer
+from rest_framework import generics
+from django.contrib.auth.models import User
+from rest_framework import permissions
+from .permissions import IsOwnerOrReadOnly
+
+class UserList(generics.ListAPIView):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+
+class UserDetail(generics.RetrieveAPIView):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+
+class StudentList(generics.ListAPIView):
+    queryset = Student.objects.all()
+    serializer_class = StudentSerializer
+    permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
+
+    # """allows us to modify how the instance save is managed, and handle any information that is implicit in the incoming request or requested URL.
+    # The create() method of our serializer will now be passed an additional 'owner' field, along with the validated data from the request."""
+
+    def perform_create(self, serializer):
+        serializer.save(owner=self.request.user)
+
+class StudentDetail(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Student.objects.all()
+    serializer_class = StudentSerializer
+    permission_classes = (permissions.IsAuthenticatedOrReadOnly,IsOwnerOrReadOnly)
+
+
 # """
 # Using generic class-based views
 # """
@@ -14,42 +52,42 @@
 #     queryset = Student.objects.all()
 #     serializer_class = StudentSerializer
 
-"""
-Using mixins
-"""
-
-from .models import Student
-from .serializers import StudentSerializer
-from rest_framework import mixins
-from rest_framework import generics
-
-class StudentList(mixins.ListModelMixin,
-                  mixins.CreateModelMixin,
-                  generics.GenericAPIView):
-    queryset = Student.objects.all()
-    serializer_class = StudentSerializer
-
-    def get(self, request, *args, **kwargs):
-        return self.list(request, *args, **kwargs)
-
-    def post(self, request, *args, **kwargs):
-        return self.create(request, *args, **kwargs)
-
-class StudentDetail(mixins.RetrieveModelMixin,
-                     mixins.UpdateModelMixin,
-                     mixins.DestroyModelMixin,
-                     generics.GenericAPIView):
-    queryset = Student.objects.all()
-    serializer_class = StudentSerializer
-
-    def get(self, request, *args, **kwargs):
-        return self.retrieve(request, *args, **kwargs)
-
-    def put(self, request, *args, **kwargs):
-        return self.update(request, *args, **kwargs)
-
-    def delete(self, request, *args, **kwargs):
-        return self.destroy(request, *args, **kwargs)
+# """
+# Using mixins
+# """
+#
+# from .models import Student
+# from .serializers import StudentSerializer
+# from rest_framework import mixins
+# from rest_framework import generics
+#
+# class StudentList(mixins.ListModelMixin,
+#                   mixins.CreateModelMixin,
+#                   generics.GenericAPIView):
+#     queryset = Student.objects.all()
+#     serializer_class = StudentSerializer
+#
+#     def get(self, request, *args, **kwargs):
+#         return self.list(request, *args, **kwargs)
+#
+#     def post(self, request, *args, **kwargs):
+#         return self.create(request, *args, **kwargs)
+#
+# class StudentDetail(mixins.RetrieveModelMixin,
+#                      mixins.UpdateModelMixin,
+#                      mixins.DestroyModelMixin,
+#                      generics.GenericAPIView):
+#     queryset = Student.objects.all()
+#     serializer_class = StudentSerializer
+#
+#     def get(self, request, *args, **kwargs):
+#         return self.retrieve(request, *args, **kwargs)
+#
+#     def put(self, request, *args, **kwargs):
+#         return self.update(request, *args, **kwargs)
+#
+#     def delete(self, request, *args, **kwargs):
+#         return self.destroy(request, *args, **kwargs)
 
 """
 Class-based Views
