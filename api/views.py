@@ -1,15 +1,35 @@
 """
-tutorial 4, authentication and autorization
-Using generic class-based views
-
+Tutorial 5: Relationships & Hyperlinked APIs
+At the moment relationships within our API are represented by using primary keys. In this part of the tutorial we'll improve the cohesion and discoverability of our API, by instead using hyperlinking for relationships.
 """
 
 from .models import Student
 from .serializers import StudentSerializer, UserSerializer
 from rest_framework import generics
 from django.contrib.auth.models import User
-from rest_framework import permissions
+from rest_framework import permissions, renderers
 from .permissions import IsOwnerOrReadOnly
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from rest_framework.reverse import reverse
+
+
+"""use regular function-based view"""
+# First, we're using REST framework's reverse function in order to return fully-qualified URLs; second, URL patterns are identified by convenience names that we will declare later on in our api/urls.py.
+@api_view(['GET'])
+def api_root(request, format=None):
+    return Response({
+        'users': reverse('user-list', request=request, format=format),
+        'students': reverse('student-list', request=request, format=format)
+    })
+
+class StudentHighlight(generics.GenericAPIView):
+    queryset = Student.objects.all()
+    renderer_classes = (renderers.StaticHTMLRenderer,)
+
+    def get(self, request, *args, **kwargs):
+        student = self.get_object()
+        return Response(student.highlighted)
 
 class UserList(generics.ListAPIView):
     queryset = User.objects.all()
@@ -34,6 +54,44 @@ class StudentDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset = Student.objects.all()
     serializer_class = StudentSerializer
     permission_classes = (permissions.IsAuthenticatedOrReadOnly,IsOwnerOrReadOnly)
+
+#
+# """
+# tutorial 4, authentication and autorization
+# Using generic class-based views
+#
+# """
+#
+# from .models import Student
+# from .serializers import StudentSerializer, UserSerializer
+# from rest_framework import generics
+# from django.contrib.auth.models import User
+# from rest_framework import permissions
+# from .permissions import IsOwnerOrReadOnly
+#
+# class UserList(generics.ListAPIView):
+#     queryset = User.objects.all()
+#     serializer_class = UserSerializer
+#
+# class UserDetail(generics.RetrieveAPIView):
+#     queryset = User.objects.all()
+#     serializer_class = UserSerializer
+#
+# class StudentList(generics.ListAPIView):
+#     queryset = Student.objects.all()
+#     serializer_class = StudentSerializer
+#     permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
+#
+#     # """allows us to modify how the instance save is managed, and handle any information that is implicit in the incoming request or requested URL.
+#     # The create() method of our serializer will now be passed an additional 'owner' field, along with the validated data from the request."""
+#
+#     def perform_create(self, serializer):
+#         serializer.save(owner=self.request.user)
+#
+# class StudentDetail(generics.RetrieveUpdateDestroyAPIView):
+#     queryset = Student.objects.all()
+#     serializer_class = StudentSerializer
+#     permission_classes = (permissions.IsAuthenticatedOrReadOnly,IsOwnerOrReadOnly)
 
 
 # """

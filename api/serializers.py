@@ -1,24 +1,46 @@
-"""adding endpoints for our User models
-authentication and authorization
+"""Relationships & Hyperlinked APIs
 """
 
 from rest_framework import serializers
 from .models import Student
 from django.contrib.auth.models import User
 
-class UserSerializer(serializers.ModelSerializer):
-    students = serializers.PrimaryKeyRelatedField(many=True, queryset=Student.objects.all())
+class UserSerializer(serializers.HyperlinkedModelSerializer):
+    students = serializers.HyperlinkedRelatedField(many=True, view_name='student-detail', read_only=True)
 
     class Meta:
         model = User
-        fields = ('id', 'username', 'students')
+        fields = ('url', 'id', 'username', 'students')
 
 """Kelas ModelSerializer"""
-class StudentSerializer(serializers.ModelSerializer):
+class StudentSerializer(serializers.HyperlinkedModelSerializer):
+    owner = serializers.ReadOnlyField(source='owner.username')
+    highlighted = serializers.HyperlinkedIdentityField(view_name='student-highlight', format='html')
     class Meta:
         model = Student
-        owner = serializers.ReadOnlyField(source='owner.username')
-        fields = ('id', 'owner', 'title', 'code', 'linenos', 'language', 'style')
+        fields = ('url', 'id', 'highlighted', 'owner', 'title', 'code', 'linenos', 'language', 'style')
+
+# """adding endpoints for our User models
+# authentication and authorization
+# """
+#
+# from rest_framework import serializers
+# from .models import Student
+# from django.contrib.auth.models import User
+#
+# class UserSerializer(serializers.ModelSerializer):
+#     students = serializers.PrimaryKeyRelatedField(many=True, queryset=Student.objects.all())
+#
+#     class Meta:
+#         model = User
+#         fields = ('id', 'username', 'students')
+#
+# """Kelas ModelSerializer"""
+# class StudentSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = Student
+#         owner = serializers.ReadOnlyField(source='owner.username')
+#         fields = ('id', 'owner', 'title', 'code', 'linenos', 'language', 'style')
 
 # from rest_framework import serializers
 # from .models import Student, LANGUAGE_CHOICES, STYLE_CHOICES
