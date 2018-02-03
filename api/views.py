@@ -1,18 +1,16 @@
 """
-Tutorial 5: Relationships & Hyperlinked APIs
+Tutorial 6: ViewSets & Routers
 At the moment relationships within our API are represented by using primary keys. In this part of the tutorial we'll improve the cohesion and discoverability of our API, by instead using hyperlinking for relationships.
 """
 
 from .models import Student
 from .serializers import StudentSerializer, UserSerializer
-from rest_framework import generics
 from django.contrib.auth.models import User
-from rest_framework import permissions, renderers
+from rest_framework import permissions, renderers,viewsets
 from .permissions import IsOwnerOrReadOnly
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, detail_route
 from rest_framework.response import Response
 from rest_framework.reverse import reverse
-
 
 """use regular function-based view"""
 # First, we're using REST framework's reverse function in order to return fully-qualified URLs; second, URL patterns are identified by convenience names that we will declare later on in our api/urls.py.
@@ -23,37 +21,90 @@ def api_root(request, format=None):
         'students': reverse('student-list', request=request, format=format)
     })
 
-class StudentHighlight(generics.GenericAPIView):
-    queryset = Student.objects.all()
-    renderer_classes = (renderers.StaticHTMLRenderer,)
 
-    def get(self, request, *args, **kwargs):
-        student = self.get_object()
-        return Response(student.highlighted)
-
-class UserList(generics.ListAPIView):
+class UserViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+       This viewset automatically provides `list` and `detail` actions.
+       """
     queryset = User.objects.all()
     serializer_class = UserSerializer
 
-class UserDetail(generics.RetrieveAPIView):
-    queryset = User.objects.all()
-    serializer_class = UserSerializer
+class StudentViewSet(viewsets.ModelViewSet):
+    """
+       This viewset automatically provides `list`, `create`, `retrieve`,
+       `update` and `destroy` actions.
 
-class StudentList(generics.ListAPIView):
+       Additionally we also provide an extra `highlight` action.
+       """
     queryset = Student.objects.all()
     serializer_class = StudentSerializer
-    permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
+    permission_classes = (permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly)
 
-    # """allows us to modify how the instance save is managed, and handle any information that is implicit in the incoming request or requested URL.
-    # The create() method of our serializer will now be passed an additional 'owner' field, along with the validated data from the request."""
+    @detail_route(renderer_classes=[renderers.StaticHTMLRenderer])
+    def highlight(self, request, *args, **kwargs):
+        student = self.get_object()
+        return Response(student.highlighted)
 
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)
 
-class StudentDetail(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Student.objects.all()
-    serializer_class = StudentSerializer
-    permission_classes = (permissions.IsAuthenticatedOrReadOnly,IsOwnerOrReadOnly)
+
+# """
+# Tutorial 5: Relationships & Hyperlinked APIs
+# At the moment relationships within our API are represented by using primary keys. In this part of the tutorial we'll improve the cohesion and discoverability of our API, by instead using hyperlinking for relationships.
+# """
+#
+# from .models import Student
+# from .serializers import StudentSerializer, UserSerializer
+# from rest_framework import generics
+# from django.contrib.auth.models import User
+# from rest_framework import permissions, renderers
+# from .permissions import IsOwnerOrReadOnly
+# from rest_framework.decorators import api_view
+# from rest_framework.response import Response
+# from rest_framework.reverse import reverse
+#
+#
+# """use regular function-based view"""
+# # First, we're using REST framework's reverse function in order to return fully-qualified URLs; second, URL patterns are identified by convenience names that we will declare later on in our api/urls.py.
+# @api_view(['GET'])
+# def api_root(request, format=None):
+#     return Response({
+#         'users': reverse('user-list', request=request, format=format),
+#         'students': reverse('student-list', request=request, format=format)
+#     })
+#
+# class StudentHighlight(generics.GenericAPIView):
+#     queryset = Student.objects.all()
+#     renderer_classes = (renderers.StaticHTMLRenderer,)
+#
+#     def get(self, request, *args, **kwargs):
+#         student = self.get_object()
+#         return Response(student.highlighted)
+#
+# class UserList(generics.ListAPIView):
+#     queryset = User.objects.all()
+#     serializer_class = UserSerializer
+#
+# class UserDetail(generics.RetrieveAPIView):
+#     queryset = User.objects.all()
+#     serializer_class = UserSerializer
+#
+# class StudentList(generics.ListAPIView):
+#     queryset = Student.objects.all()
+#     serializer_class = StudentSerializer
+#     permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
+#
+#     # """allows us to modify how the instance save is managed, and handle any information that is implicit in the incoming request or requested URL.
+#     # The create() method of our serializer will now be passed an additional 'owner' field, along with the validated data from the request."""
+#
+#     def perform_create(self, serializer):
+#         serializer.save(owner=self.request.user)
+#
+# class StudentDetail(generics.RetrieveUpdateDestroyAPIView):
+#     queryset = Student.objects.all()
+#     serializer_class = StudentSerializer
+#     permission_classes = (permissions.IsAuthenticatedOrReadOnly,IsOwnerOrReadOnly)
 
 #
 # """
