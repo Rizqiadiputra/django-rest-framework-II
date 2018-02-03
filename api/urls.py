@@ -32,22 +32,23 @@ from rest_framework import renderers
 #     url(r'^users/(?P<pk>[0-9]+)/$', views.UserDetail.as_view(), name='user-detail'),
 # ])
 
-#cara ke 6
 
-#using routers
-from django.conf.urls import url,include
-from rest_framework.routers import DefaultRouter
-from . import views
-
-#create a router and register our viewsets with it
-router = DefaultRouter()
-router.register(r'students', views.StudentViewSet)
-router.register(r'users', views.UserViewSet)
-
-#the API URLs are now determined automatically by the router
-urlpatterns = [
-    url(r'^', include(router.urls))
-]
+# #cara ke 6
+#
+# #using routers
+# from django.conf.urls import url,include
+# from rest_framework.routers import DefaultRouter
+# from . import views
+#
+# #create a router and register our viewsets with it
+# router = DefaultRouter()
+# router.register(r'students', views.StudentViewSet)
+# router.register(r'users', views.UserViewSet)
+#
+# #the API URLs are now determined automatically by the router
+# urlpatterns = [
+#     url(r'^', include(router.urls))
+# ]
 
 #
 # #bind ViewSet classes into a set of concrete views
@@ -90,4 +91,26 @@ urlpatterns = [
 #
 
 
+
+#cara ke 7
+
+#using schema view with coreapi
+
+from django.conf.urls import url,include
+from rest_framework.routers import DefaultRouter
+from rest_framework.schemas import get_schema_view
+from . import views
+
+#create a router and register our viewsets with it
+router = DefaultRouter()
+router.register(r'students', views.StudentViewSet)
+router.register(r'users', views.UserViewSet)
+
+#the API URLs are now determined automatically by the router
+schema_view = get_schema_view(title='Pastebin API')
+urlpatterns = [
+    url(r'^', include(router.urls)),
+    url(r'^schema/$', schema_view),
+
+]
 
